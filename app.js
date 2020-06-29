@@ -11,7 +11,6 @@ const aboutContent = "Hac habitasse platea dictumst vestibulum rhoncus est pelle
 const contactContent = "Scelerisque eleifend donec pretium vulputate sapien. Rhoncus urna neque viverra justo nec ultrices. Arcu dui vivamus arcu felis bibendum. Consectetur adipiscing elit duis tristique. Risus viverra adipiscing at in tellus integer feugiat. Sapien nec sagittis aliquam malesuada bibendum arcu vitae. Consequat interdum varius sit amet mattis. Iaculis nunc sed augue lacus. Interdum posuere lorem ipsum dolor sit amet consectetur adipiscing elit. Pulvinar elementum integer enim neque. Ultrices gravida dictum fusce ut placerat orci nulla. Mauris in aliquam sem fringilla ut morbi tincidunt. Tortor posuere ac ut consequat semper viverra nam libero.";
 
 const app = express();
-const postArray = [];
 
 app.set('view engine', 'ejs');
 
@@ -33,10 +32,17 @@ const Post = mongoose.model("Post", postSchema);
 
 //get - for root route
 app.get("/",(req,res) =>{
-  res.render("home", {
-    startingContent: homeStartingContent, 
-    newCompose: postArray
+
+  Post.find({},(err,post) => {
+    if(!err) {
+      res.render("home", {
+        startingContent: homeStartingContent, 
+        newCompose: post
+      });
+    }
   });
+
+  
 
 });
 
@@ -61,20 +67,27 @@ app.post("/compose",(req,res)=> {
     title: req.body.postTitle,
     body: req.body.postBody
   });
-  post.save();
-  postArray.push(post);
-  res.redirect("/");
-})
+  post.save((err) => {
+    if(!err) {
+    res.redirect("/");
+    }
+  });
+});
 
 //get - params 
-app.get("/posts/:param",(req,res) => {
-  const requestedTitile = _.lowerCase(req.params.param);
-  postArray.forEach((post)=> {
-    const title1 = _.lowerCase(post.title);
-    if(requestedTitile === title1) {
-      res.render("post",{title: post.title, body: post.body})
-    }
-  })
+app.get("/posts/:postid",(req,res) => {
+  const requestedId = req.params.postid;
+  Post.findOne({_id:requestedId},(err,foundPost) => {
+    if(!err) {
+      res.render("post",{title: foundPost.title, body: foundPost.body});
+    } 
+  });
+  // postArray.forEach((post)=> {
+  //   const title1 = _.lowerCase(post.title);
+  //   if(requestedTitile === title1) {
+  //     res.render("post",{title: post.title, body: post.body})
+  //   }
+  // })
 })
 
 app.listen(port, function() {
